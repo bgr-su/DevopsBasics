@@ -1,0 +1,42 @@
+# Maven
+# Build your Java project and run tests with Apache Maven.
+# Add steps that analyze code, save build artifacts, deploy, and more:
+# https://docs.microsoft.com/azure/devops/pipelines/languages/java
+# Cross check CI
+
+trigger:
+- master
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- task: Maven@3
+  inputs:
+    mavenPomFile: 'pom.xml'
+    mavenOptions: '-Xmx3072m'
+    javaHomeOption: 'JDKVersion'
+    jdkVersionOption: '1.8'
+    jdkArchitectureOption: 'x64'
+    publishJUnitResults: true
+    testResultsFiles: '**/surefire-reports/TEST-*.xml'
+    goals: 'package'
+- task: Docker@2
+  inputs:
+    containerRegistry: 'svc-docker-hub'
+    command: 'login'
+- task: Docker@2
+  inputs:
+    containerRegistry: 'svc-docker-hub'
+    repository: 'ibabich / azdops'
+    command: 'buildAndPush'
+    Dockerfile: '**/AzureDockerfile'
+#- task: CopyFiles@2
+#  inputs:
+#    Contents: '**/*.war'
+#    TargetFolder: '$(Build.ArtifactStagingDirectory)'
+#- task: PublishBuildArtifacts@1
+#  inputs:
+#    PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+#    ArtifactName: 'warfile'
+#    publishLocation: 'Container'
